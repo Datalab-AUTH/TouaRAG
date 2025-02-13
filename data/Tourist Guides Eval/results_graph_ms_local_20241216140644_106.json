@@ -1,0 +1,12 @@
+{
+    "context_recall": 0.5986478542034098,
+    "factual_correctness": 0.36943396226415093,
+    "faithfulness": 0.7580538708989392,
+    "semantic_similarity": 0.7514996156733273,
+    "llm_context_precision_without_reference": 0.7258526212967867,
+    "llm_context_precision_with_reference": 0.5286149928371581,
+    "non_llm_context_recall": 0.04716981132075472,
+    "context_entity_recall": 0.31273662724113394,
+    "noise_sensitivity_relevant": NaN,
+    "answer_relevancy": 0.8235384185853298
+}
