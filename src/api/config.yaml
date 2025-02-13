@@ -1,0 +1,11 @@
+api:
+  OPEN_AI_API_KEY: ""
+  OPEN_AI_API_KEY_2: ""
+  LLAMA_CLOUD_API_KEY: ""
+  HF_TOKEN: ""
+db:
+  DB_NAME: "vector_db"
+  USER: "postgres"
+  PASSWORD: "password"
+  HOST: "localhost"
+  PORT: 5432

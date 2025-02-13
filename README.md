@@ -11,7 +11,7 @@
 TouaRAG is your comprehensive framework for building and evaluating context-aware travel chatbots. Leverage our modular library **touarag**—packed with implementations for testing various RAG architectures and evaluating their performance—to deliver tailored travel recommendations. In addition, our solution offers an integrated API backend and UI frontend to effortlessly run a RAG chatbot with profile personalization, model selection, and architecture configuration.
 
 > **Prerequisites:**  
-> This framework is designed for Linux environments (due to bash script usage). Make sure to install the required libraries using `requirements.txt` before proceeding.
+> This framework is designed for Linux environments (due to bash script usage). Make sure to install the required libraries using `requirements.txt` before proceeding. Additionally, ensure that PostgreSQL 15 is installed on your system.
 
 ## Key Features
 
@@ -29,6 +29,8 @@ TouaRAG is your comprehensive framework for building and evaluating context-awar
 - **Dependencies:** Install required libraries with:
   ```bash
   pip install -r requirements.txt
+  ```
+- **Database:** PostgreSQL 15 with PGVector plugin must be installed
 
 ## Install the TouaRAG Library
 
@@ -41,6 +43,9 @@ TouaRAG is your comprehensive framework for building and evaluating context-awar
 ```bash
 ./uninstall.sh
 ```
+## Secrets Management
+
+To securely store your secrets (e.g., tokens, usernames, passwords), place them in the `config.yml` file located in the `src/api` directory.
 
 ## Quickstart
 
@@ -74,5 +79,4 @@ query_engine = TransformQueryEngine(...)
     evaluator.generate_samples()
     evaluator.save_samples(output_dir="...")
     evaluator.evaluate(output_dir="...")
-
 ```
