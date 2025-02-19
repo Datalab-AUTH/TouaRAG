@@ -151,12 +151,12 @@ def call_query_api(query, method):
 prompt = st.chat_input("What is up?")
 if prompt:
     # Add the user's message to the chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state.messages.append({"role": "user", "content": prompt+ f" **| Query made with {model_option} {methodology}**"})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(prompt + f" **| Query made with {model_option} {methodology}**")
 
     # Determine the method based on selected mode and methodology
-    method = "baseline" if mode == "Basic" else methodology.lower()
+    method = "baseline" if mode == "Baseline" else methodology.lower()
 
     # Show thinking message while processing
     with st.chat_message("assistant"):

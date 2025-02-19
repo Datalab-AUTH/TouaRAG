@@ -3,6 +3,7 @@ from enum import Enum
 from pydantic import BaseModel
 from typing import List
 import time
+import os
 
 
 class MethodName(str, Enum):
@@ -63,8 +64,15 @@ async def root(request_body: QueryRequest, request: Request = None):
 
     # Extract from response object, the source nodes (context)
     retrieved_context = result.source_nodes[:]
-    retrieved_texts = [context.text if hasattr(context, 'text') else context for context in retrieved_context]
-    # print(f"Retrieved context: {retrieved_texts}")
+    retrieved_texts = []
+    for context in retrieved_context:
+        text = context.text if hasattr(context, 'text') else context
+        metadata = context.metadata if hasattr(context, 'metadata') else {}
+        source = metadata.get('source', 'unknown')
+        file_path = os.path.basename(metadata.get('file_path', 'unknown'))
+        entities = ', '.join(metadata.get('entities', []))
+        metadata_str = f"\n\n**[File: {file_path}, Page: {source}, Entities Identified: {entities}]**\n\n"
+        retrieved_texts.append(f"{text} {metadata_str}")
 
     return QueryResponse(
         response=result.response,
