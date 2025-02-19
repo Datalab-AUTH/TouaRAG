@@ -16,12 +16,43 @@ chat_history = st.session_state.get("messages", [])
 
 st.title("TouaRAG Assistant")
 
+# ------------------------------
+
+
+st.sidebar.markdown("## RAG Architectures")
+mode = st.sidebar.radio("Choose a mode:", ["Baseline", "Advanced"])
+if mode == "Baseline":
+    st.sidebar.write("Using baseline methodology.")
+    # For basic mode, set default values for methodology 
+    methodology = "Baseline"
+else:
+    st.sidebar.write("Configure advanced settings:")
+    methodology = st.sidebar.selectbox("Select Methodology", ["Hybrid", "Automerge", "HyDE"])
+
+
+# Horizontal line to separate sections
+st.sidebar.markdown("---")
+
+st.sidebar.markdown("## Configuration Settings")
+
 # --- Model Selection ---
-st.sidebar.subheader("Select Model")
+st.sidebar.markdown("#### Select Model")
 model_option = st.sidebar.radio("Choose Model: (Local Default)", ["Local", "OpenAI"])
 
-# Add load model button 
-if st.sidebar.button("Load Model"):
+# -----------------------
+# Sidebar: File Upload & RAG Modes
+# -----------------------
+st.sidebar.markdown("#### Upload PDF Files")
+st.sidebar.info("Upload your PDFs here. (Only .pdf files are accepted)")
+uploaded_files = st.sidebar.file_uploader("Select PDF files", type=["pdf"], accept_multiple_files=True)
+# Add top_k parameter in the sidebar
+top_k = st.sidebar.slider("Select Top K Retrieved Results", min_value=1, max_value=10, value=5)
+
+# -----------------------
+# Build Configuration Button (Combined Action)
+# -----------------------
+if st.sidebar.button("Build Configuration"):
+    # --- Load the Selected Model ---
     if model_option == "Local":
         try:
             response_model = requests.post(
@@ -46,75 +77,30 @@ if st.sidebar.button("Load Model"):
                 st.sidebar.error(f"OpenAI model loading failed with status code {response_model.status_code}")
         except requests.exceptions.RequestException as e:
             st.sidebar.error(f"Error loading OpenAI model: {str(e)}")
-
-# -----------------------
-# Sidebar: File Upload & RAG Modes
-# -----------------------
-
-st.sidebar.subheader("Upload PDF Files")
-st.sidebar.info("Upload your PDFs here. (Only .pdf files are accepted)")
-uploaded_files = st.sidebar.file_uploader("Select PDF files", type=["pdf"], accept_multiple_files=True)
-# Add top_k parameter in the sidebar
-top_k = st.sidebar.slider("Select Top K Retrieved Results", min_value=1, max_value=10, value=5)
-
-if uploaded_files:
-    if st.sidebar.button("Process Uploaded Files"):
+    
+    # --- Process Uploaded Files if Present ---
+    if uploaded_files:
         status_container = st.sidebar.empty()
-        
         with status_container:
             with st.spinner('Processing files...'):
-                # Prepare the files parameter for the POST request
+                # Prepare files for the POST request
                 files = [('files', (file.name, file, 'application/pdf')) for file in uploaded_files]
-                
                 try:
                     response = requests.post(
                         f'http://127.0.0.1:8000/api/upload/{top_k}',
                         headers={'accept': 'application/json'},
                         files=files
                     )
-                    
                     if response.status_code == 200:
                         st.session_state["pdf_files"].extend(uploaded_files)
                         st.sidebar.success("✅ Successfully uploaded all files")
                     else:
                         st.sidebar.error(f"Failed to upload files. Status code: {response.status_code}")
-                        
                 except requests.exceptions.RequestException as e:
                     st.sidebar.error(f"Error uploading files: {str(e)}")
-
-        status_container.success("✅ All files processed!")
-
-# -----------------------
-# Fetch and Display Uploaded Files from API on Each Page Access
-# -----------------------
-try:
-    response_files = requests.get(
-        'http://127.0.0.1:8000/api/loaded_files',
-        headers={'accept': 'application/json'}
-    )
-    if response_files.status_code == 200:
-        files_list = response_files.json().get("loaded_files", [])  # Expecting a list of file details (e.g., [{'name': 'file1.pdf'}, ...])
-        st.sidebar.markdown("### Uploaded Files")
-        for file_info in files_list:
-            st.sidebar.write(file_info.get("name", "Unnamed File"))
     else:
-        st.sidebar.error(f"Error fetching files: Status code {response_files.status_code}")
-except requests.exceptions.RequestException as e:
-    st.sidebar.error(f"Error fetching files: {str(e)}")
+        st.sidebar.info("No PDF files uploaded to process.")
 
-
-# ------------------------------
-
-
-st.sidebar.subheader("RAG Modes")
-mode = st.sidebar.radio("Choose a mode:", ["Basic", "Advanced"])
-if mode == "Basic":
-    st.sidebar.write("Using baseline methodology.")
-    # For basic mode, set default values for methodology 
-    methodology = "Baseline"
-else:
-    st.sidebar.write("Configure advanced settings:")
-    methodology = st.sidebar.selectbox("Select Methodology", ["Hybrid", "Automerge", "HyDE"])
 
 # ------------------------------
 # Chat Interface (Main Area)
