@@ -14,7 +14,7 @@ if "pdf_files" not in st.session_state:
 uploaded_files = st.session_state.get("pdf_files", [])
 chat_history = st.session_state.get("messages", [])
 
-st.title("Touareg Assistant")
+st.title("TouaRAG Assistant")
 
 # --- Model Selection ---
 st.sidebar.subheader("Select Model")
@@ -61,29 +61,50 @@ if uploaded_files:
     if st.sidebar.button("Process Uploaded Files"):
         status_container = st.sidebar.empty()
         
-        for file in uploaded_files:
-            with status_container:
-                with st.spinner(f'Processing {file.name}...'):
-                    # Prepare the files parameter for the POST request
-                    files = {'files': (file.name, file, 'application/pdf')}
+        with status_container:
+            with st.spinner('Processing files...'):
+                # Prepare the files parameter for the POST request
+                files = [('files', (file.name, file, 'application/pdf')) for file in uploaded_files]
+                
+                try:
+                    response = requests.post(
+                        f'http://127.0.0.1:8000/api/upload/{top_k}',
+                        headers={'accept': 'application/json'},
+                        files=files
+                    )
                     
-                    try:
-                        response = requests.post(
-                            f'http://127.0.0.1:8000/api/upload/{top_k}',
-                            headers={'accept': 'application/json'},
-                            files=files
-                        )
+                    if response.status_code == 200:
+                        st.session_state["pdf_files"].extend(uploaded_files)
+                        st.sidebar.success("✅ Successfully uploaded all files")
+                    else:
+                        st.sidebar.error(f"Failed to upload files. Status code: {response.status_code}")
                         
-                        if response.status_code == 200:
-                            st.session_state["pdf_files"].append(file)
-                            st.sidebar.success(f"✅ Successfully uploaded: {file.name}")
-                        else:
-                            st.sidebar.error(f"Failed to upload {file.name}. Status code: {response.status_code}")
-                            
-                    except requests.exceptions.RequestException as e:
-                        st.sidebar.error(f"Error uploading {file.name}: {str(e)}")
+                except requests.exceptions.RequestException as e:
+                    st.sidebar.error(f"Error uploading files: {str(e)}")
 
         status_container.success("✅ All files processed!")
+
+# -----------------------
+# Fetch and Display Uploaded Files from API on Each Page Access
+# -----------------------
+try:
+    response_files = requests.get(
+        'http://127.0.0.1:8000/api/loaded_files',
+        headers={'accept': 'application/json'}
+    )
+    if response_files.status_code == 200:
+        files_list = response_files.json().get("loaded_files", [])  # Expecting a list of file details (e.g., [{'name': 'file1.pdf'}, ...])
+        st.sidebar.markdown("### Uploaded Files")
+        for file_info in files_list:
+            st.sidebar.write(file_info.get("name", "Unnamed File"))
+    else:
+        st.sidebar.error(f"Error fetching files: Status code {response_files.status_code}")
+except requests.exceptions.RequestException as e:
+    st.sidebar.error(f"Error fetching files: {str(e)}")
+
+
+# ------------------------------
+
 
 st.sidebar.subheader("RAG Modes")
 mode = st.sidebar.radio("Choose a mode:", ["Basic", "Advanced"])
@@ -93,7 +114,7 @@ if mode == "Basic":
     methodology = "Baseline"
 else:
     st.sidebar.write("Configure advanced settings:")
-    methodology = st.sidebar.selectbox("Select Methodology", ["Hybrid", "Automerge", "HyDE", "GraphRAG"])
+    methodology = st.sidebar.selectbox("Select Methodology", ["Hybrid", "Automerge", "HyDE"])
 
 # ------------------------------
 # Chat Interface (Main Area)

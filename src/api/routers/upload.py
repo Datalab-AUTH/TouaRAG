@@ -401,3 +401,12 @@ async def automerge(top_k, request: Request = None):
     
     print("Automerge query engine created.")
     return query_engine
+
+
+@router.get("/loaded_files", summary="Get loaded files")
+async def get_loaded_files():
+    """
+    Get a list of all files currently loaded in the 'temp_data' directory.
+    """
+    files = [{"name": f} for f in os.listdir(LOAD_DIR) if os.path.isfile(os.path.join(LOAD_DIR, f))]
+    return {"loaded_files": files}

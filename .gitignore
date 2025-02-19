@@ -169,3 +169,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# vscode config
+.vscode/launch.json
+
+# Don't add pdf files in processed folder
+temp_data

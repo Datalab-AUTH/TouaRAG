@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# Kill FastAPI processes
-pkill -f "fastapi dev api/app.py"
+# Force kill FastAPI processes
+pkill -9 -f "fastapi dev api/app.py"
 
-# Kill Streamlit processes
-pkill -f "streamlit run ui/Welcome.py"
+# Force kill Streamlit processes
+pkill -9 -f "streamlit run ui/Welcome.py"
 
-echo "FastAPI and Streamlit apps stopped."
+# Force kill Anaconda-related processes
+pkill -9 -f "anaconda"
+
+echo "FastAPI, Streamlit, and Anaconda-related processes forcefully stopped."
