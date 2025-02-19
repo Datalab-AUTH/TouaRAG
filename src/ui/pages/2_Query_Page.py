@@ -38,6 +38,10 @@ st.sidebar.markdown("## Configuration Settings")
 # --- Model Selection ---
 st.sidebar.markdown("#### Select Model")
 model_option = st.sidebar.radio("Choose Model: (Local Default)", ["Local", "OpenAI"])
+# --- API Token Input ---
+st.sidebar.write("Enter your HF or OpenAI API Token:")
+api_token = st.sidebar.text_input("Enter API Token", value=st.session_state.get("api_token", ""), type="password")
+st.session_state["api_token"] = api_token
 
 # -----------------------
 # Sidebar: File Upload & RAG Modes
@@ -52,31 +56,34 @@ top_k = st.sidebar.slider("Select Top K Retrieved Results", min_value=1, max_val
 # Build Configuration Button (Combined Action)
 # -----------------------
 if st.sidebar.button("Build Configuration"):
-    # --- Load the Selected Model ---
-    if model_option == "Local":
-        try:
-            response_model = requests.post(
-                'http://127.0.0.1:8000/model/local',
-                headers={'accept': 'application/json'}
-            )
-            if response_model.status_code == 200:
-                st.sidebar.success("Local model loaded successfully")
+    status_container = st.sidebar.empty()
+    with status_container:
+        with st.spinner('Loading Models...'):
+            # --- Load the Selected Model ---
+            if model_option == "Local":
+                try:
+                    response_model = requests.post(
+                        f'http://127.0.0.1:8000/model/local?token={api_token}',
+                        headers={'accept': 'application/json'}
+                    )
+                    if response_model.status_code == 200:
+                        st.sidebar.success("Local model loaded successfully")
+                    else:
+                        st.sidebar.error(f"Local model loading failed with status code {response_model.status_code}")
+                except requests.exceptions.RequestException as e:
+                    st.sidebar.error(f"Error loading local model: {str(e)}")
             else:
-                st.sidebar.error(f"Local model loading failed with status code {response_model.status_code}")
-        except requests.exceptions.RequestException as e:
-            st.sidebar.error(f"Error loading local model: {str(e)}")
-    else:
-        try:
-            response_model = requests.post(
-                'http://127.0.0.1:8000/model/openai',
-                headers={'accept': 'application/json'}
-            )
-            if response_model.status_code == 200:
-                st.sidebar.success("OpenAI model loaded successfully")
-            else:
-                st.sidebar.error(f"OpenAI model loading failed with status code {response_model.status_code}")
-        except requests.exceptions.RequestException as e:
-            st.sidebar.error(f"Error loading OpenAI model: {str(e)}")
+                try:
+                    response_model = requests.post(
+                        f'http://127.0.0.1:8000/model/openai?token={api_token}',
+                        headers={'accept': 'application/json'}
+                    )
+                    if response_model.status_code == 200:
+                        st.sidebar.success("OpenAI model loaded successfully")
+                    else:
+                        st.sidebar.error(f"OpenAI model loading failed with status code {response_model.status_code}")
+                except requests.exceptions.RequestException as e:
+                    st.sidebar.error(f"Error loading OpenAI model: {str(e)}")
     
     # --- Process Uploaded Files if Present ---
     if uploaded_files:

@@ -73,20 +73,7 @@ HF_TOKEN = config.get_section(section="api")["HF_TOKEN"]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start timing
-    start = time.perf_counter() 
-    print("Loading LLM and embed models...")
-    # Load Hugging Face models
-    global llm, embed_model
-    llm = load_hf_llm(hf_token=HF_TOKEN)
-    embed_model = load_hf_embed(hf_token=HF_TOKEN)
-    app.state.llm = llm
-    app.state.embed_model = embed_model
-    app.state.provider = "local"
-    print("LLM and embed model loaded successfully.")
-    # Calculate execution time
-    end = time.perf_counter() 
-    print(f"LLM loading time: {end-start:.2f} seconds")
+    app.state.provider = "na"
     yield
 
 app = FastAPI(title="Multi-Architecture RAG API", lifespan=lifespan)
@@ -100,10 +87,18 @@ async def root():
 
 
 @app.post("/model/{provider}", summary="Change the provider of the LLM and Embedding models.")
-async def model_change(provider : str):
+async def model_change(provider: str, token: str):
     clear_memory()
-    # OpenAI
-    os.environ["OPENAI_API_KEY"] = config.get_section(section="api")["OPEN_AI_API_KEY"]
+
+    global llm, embed_model
+
+    if provider == "openai":
+        # Set OpenAI API key
+        os.environ["OPENAI_API_KEY"] = token
+
+    # Start timing
+    start = time.perf_counter()
+    print("Loading LLM and embed models...")
 
     if provider == "openai":
         if app.state.provider == "openai":
@@ -116,13 +111,18 @@ async def model_change(provider : str):
         if app.state.provider == "local":
             return {"message": "Provider is already Local."}
         # Load Hugging Face models
-        llm = load_hf_llm(hf_token=HF_TOKEN)
-        embed_model = load_hf_embed(hf_token=HF_TOKEN)
+        llm = load_hf_llm(hf_token=token)
+        embed_model = load_hf_embed(hf_token=token)
         app.state.provider = "local"
 
     # Setup Default LLM and Embed Model
     app.state.llm = llm
     app.state.embed_model = embed_model
+
+    print("LLM and embed model loaded successfully.")
+    # Calculate execution time
+    end = time.perf_counter()
+    print(f"LLM loading time: {end-start:.2f} seconds")
     del llm
     del embed_model
     clear_memory()
